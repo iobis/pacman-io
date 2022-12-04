@@ -1,0 +1,11 @@
+htmlcov
+coverage.xml
+build
+dist
+*.egg-info
+__pycache__
+*.pyc
+.coverage
+.idea
+cover
+.DS_Store
