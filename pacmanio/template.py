@@ -27,7 +27,7 @@ class Template:
         df = pd.read_excel(self.path, engine="openpyxl", sheet_name="Sampling metadata", header=None, skiprows=1).T
         df.columns = df.iloc[0]
         df.drop(0, inplace=True)
-        df = df.iloc[:, 1:]
+        df.drop(df.index[-1], inplace=True)
         self.metadata = Sheet(df=df)
 
     def read_samples(self):

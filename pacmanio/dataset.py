@@ -37,9 +37,8 @@ class Dataset:
         if self.template is None:
             raise Exception("No template")
 
-        # TODO: generate EML
-
-        # TODO: generate event core
+        # generate event core
+        # TODO: locality
 
         event = self.template.samples.df
         event.rename(columns={
@@ -50,9 +49,12 @@ class Dataset:
             "Type": "type",
             "Date": "eventDate"
         }, inplace=True)
-        event = event.loc[:, ["eventID", "parentEventID", "decimalLongitude", "decimalLatitude", "eventDate", "type"]]
+        event["locality"] = self.template.metadata.df[
+            ["Site ID", "Location"]
+        ].apply(lambda values: "; ".join([value for value in values if value is not None]), axis=1).iloc[0]
+        event = event.loc[:, ["eventID", "parentEventID", "locality", "decimalLongitude", "decimalLatitude", "eventDate", "type"]]
 
-        # TODO: generate occurrence extension
+        # generate occurrence extension
 
         occurrence = self.template.vouchers.df
         occurrence.rename(columns={
@@ -97,7 +99,7 @@ class Dataset:
 
         # TODO: generate measurementorfact extension
 
-        # TODO: generate archive
+        # generate archive
 
         archive = Archive()
         archive.eml_text = ""
@@ -108,4 +110,4 @@ class Dataset:
         extension_table = Table(spec="https://rs.gbif.org/core/dwc_occurrence_2022-02-02.xml", data=occurrence, id_index=0)
         archive.extensions.append(extension_table)
 
-        print(archive)
+        return archive
