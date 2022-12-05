@@ -1,9 +1,15 @@
 import os
 from pacmanio.template import Template
 import numpy as np
+import pyworms
+from dwcawriter import Archive, Table
+import logging
 
 
-class Archive:
+logger = logging.getLogger("pacmanio")
+
+
+class Dataset:
 
     def __init__(self, path: str = None):
 
@@ -26,7 +32,7 @@ class Archive:
             elif len(excel_files) == 0:
                 raise Exception("No Excel file found")
 
-    def generate_dwca(self) -> None:
+    def generate_dwca(self, match_worms=True) -> None:
 
         if self.template is None:
             raise Exception("No template")
@@ -74,6 +80,32 @@ class Archive:
 
         occurrence = occurrence.loc[:, ["eventID", "materialSampleID", "scientificName", "identifiedBy", "phylum", "subphylum", "class", "order", "family", "genus", "species", "organismQuantity", "occurrenceRemarks"]]
 
+        if match_worms:
+            names = occurrence["scientificName"].values.tolist()
+            logger.debug(f"Matching {len(names)} names")
+            all_matches = [pyworms.aphiaRecordsByMatchNames(name) for name in names]
+            assert (len(all_matches) == len(names))
+
+            def select_match(matches):
+                matches = matches[0]
+                good_matches = [match for match in matches if match["match_type"] == "exact" or match["match_type"] == "exact_subgenus"]
+                if len(good_matches) > 0:
+                    return "urn:lsid:marinespecies.org:taxname:" + str(good_matches[0]["AphiaID"])
+
+            matched_ids = list(map(select_match, all_matches))
+            occurrence["scientificNameID"] = matched_ids
+
         # TODO: generate measurementorfact extension
 
         # TODO: generate archive
+
+        archive = Archive()
+        archive.eml_text = ""
+
+        core_table = Table(spec="https://rs.gbif.org/core/dwc_event_2022-02-02.xml", data=event, id_index=0, only_mapped_columns=True)
+        archive.core = core_table
+
+        extension_table = Table(spec="https://rs.gbif.org/core/dwc_occurrence_2022-02-02.xml", data=occurrence, id_index=0)
+        archive.extensions.append(extension_table)
+
+        print(archive)

@@ -1,5 +1,9 @@
 import os
 import pandas as pd
+import warnings
+
+
+warnings.simplefilter(action="ignore", category=UserWarning)
 
 
 class Template:

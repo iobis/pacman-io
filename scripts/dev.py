@@ -1,9 +1,15 @@
-from pacmanio.archive import Archive
+from pacmanio.dataset import Dataset
+import logging
 
-archive = Archive("~/Desktop/temp/miri/site_1")
 
-#print(archive.template.metadata.df)
-#print(archive.template.samples.df)
-#print(archive.template.vouchers.df)
+logging.basicConfig()
+logging.getLogger("pacmanio").setLevel(logging.DEBUG)
 
-archive.generate_dwca()
+
+dataset = Dataset("~/Desktop/temp/miri/site_1")
+
+#print(dataset.template.metadata.df)
+#print(dataset.template.samples.df)
+#print(dataset.template.vouchers.df)
+
+dataset.generate_dwca()
