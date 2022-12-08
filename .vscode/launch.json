@@ -13,5 +13,14 @@
             "justMyCode": true,
             "env": {"PYTHONPATH": "${workspaceFolder}"}
         },
+        {
+            "name": "Script: dev_plutof",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/dev_plutof.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {"PYTHONPATH": "${workspaceFolder}"}
+        },
     ]
 }

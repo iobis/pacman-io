@@ -4,6 +4,7 @@ import numpy as np
 import pyworms
 from dwcawriter import Archive, Table
 import logging
+import pandas as pd
 
 
 logger = logging.getLogger("pacmanio")
@@ -32,15 +33,14 @@ class Dataset:
             elif len(excel_files) == 0:
                 raise Exception("No Excel file found")
 
-    def generate_dwca(self, match_worms=True) -> None:
+    def generate_dwca(self, match_worms=True) -> Archive:
 
         if self.template is None:
             raise Exception("No template")
 
         # generate event core
-        # TODO: locality
 
-        event = self.template.samples.df
+        event = self.template.samples.df.copy()
         event.rename(columns={
             "Sample / plate ID": "eventID",
             "Plate deployment ID": "parentEventID",
@@ -52,11 +52,36 @@ class Dataset:
         event["locality"] = self.template.metadata.df[
             ["Site ID", "Location"]
         ].apply(lambda values: "; ".join([value for value in values if value is not None]), axis=1).iloc[0]
+
+        top_event = self.template.metadata.df.copy()
+        top_event["type"] = "Sampling campaign"
+        top_event.loc[:, "Locality"] = top_event[
+            ["Site ID", "Location", "Port name"]
+        ].apply(lambda values: "; ".join([value for value in values if value is not None]), axis=1)
+        top_event.rename(columns={
+            "eventID": "Site ID",
+            "Longitude": "decimalLongitude",
+            "Latitude": "decimalLatitude",
+            "Date": "eventDate",
+            "Time": "eventTime"
+        }, inplace=True)
+
+        event["parentEventID"] = event["parentEventID"].fillna(top_event["Site ID"].iloc[0])
+
+        parent_events = event.loc[:, ["parentEventID"]]
+        top_event["type"] = "plate series"
+        parent_events.dropna(subset=["parentEventID"], inplace=True)
+        parent_events.rename(columns={
+            "parentEventID": "eventID"
+        }, inplace=True)
+        parent_events.loc[:, "parentEventID"] = top_event["Site ID"].iloc[0]
+
+        event = pd.concat([top_event, parent_events, event])
         event = event.loc[:, ["eventID", "parentEventID", "locality", "decimalLongitude", "decimalLatitude", "eventDate", "type"]]
 
         # generate occurrence extension
 
-        occurrence = self.template.vouchers.df
+        occurrence = self.template.vouchers.df.copy()
         occurrence.rename(columns={
             "Sample / plate": "eventID",
             "Specimen voucher ID": "materialSampleID",

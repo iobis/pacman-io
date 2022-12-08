@@ -39,4 +39,4 @@ serializer = XmlSerializer(config=config)
 eml_text = serializer.render(doc)
 
 archive.eml_text = eml_text
-archive.export(os.path.expanduser("~/Desktop/test.zip"))
+archive.export(os.path.expanduser("~/Desktop/temp/test.zip"))
