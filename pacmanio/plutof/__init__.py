@@ -2,6 +2,7 @@ from dotenv.main import load_dotenv
 import os
 import requests
 import logging
+from typing import List
 
 
 load_dotenv()
@@ -29,7 +30,8 @@ class PlutofReader:
 
         logger.info(url)
         items = requests.get(url, headers={
-            "Authorization": f"Bearer {self.access_token}"
+            "Authorization": f"Bearer {self.access_token}",
+            "User-Agent": "PacMAN"
         }).json()
         return items
 
@@ -41,12 +43,17 @@ class PlutofReader:
             page_url = url + str(page)
             logger.info(page_url)
             res = requests.get(page_url, headers={
-                "Authorization": f"Bearer {self.access_token}"
+                "Authorization": f"Bearer {self.access_token}",
+                "User-Agent": "PacMAN"
             })
             if res.status_code != 200:
                 break
             else:
                 results = res.json()
+                if type(results) is not list:
+                    results = results["results"]
+                if len(results) == 0:
+                    break
                 items = items + results
                 page = page + 1
         return items
@@ -70,3 +77,21 @@ class PlutofReader:
         event_urls = list(set([sample["samplingevent"] for sample in samples]))
         items = list(map(self.fetch, event_urls))
         return items
+
+    def get_specimens(self, material_sample: int = None):
+
+        if material_sample is not None:
+            url = f"https://api.plutof.ut.ee/v1/taxonoccurrence/specimen/specimens/?page_size=50&related_materialsample={material_sample}&page="
+        else:
+            url = f"https://api.plutof.ut.ee/v1/taxonoccurrence/specimen/specimens/search/?page_size=50&parent_taxon=true&study={self.project_id}&include_cb=true&page="
+        items = self.paginate(url)
+        return items
+
+    def get_specimens_for_samples(self, samples: List):
+
+        sample_ids = list(set([sample["id"] for sample in samples]))
+        specimens = []
+        for sample_id in sample_ids:
+            page = self.get_specimens(material_sample=sample_id)
+            specimens.extend(page)
+        return specimens
