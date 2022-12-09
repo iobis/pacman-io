@@ -95,3 +95,39 @@ class PlutofReader:
             page = self.get_specimens(material_sample=sample_id)
             specimens.extend(page)
         return specimens
+
+    def delete(self, url):
+
+        logger.info(url)
+        res = requests.delete(url, headers={
+            "Authorization": f"Bearer {self.access_token}",
+            "User-Agent": "PacMAN"
+        })
+        logger.info(res.status_code)
+        if res.status_code != 204:
+            logger.error(res.text)
+
+    def clear_project(self):
+
+        answer = input("Are you sure? [y/N] ")
+        if answer.lower() not in ["y", "yes"]:
+            return
+
+        samples = self.get_samples()
+        specimens = self.get_specimens_for_samples(samples)
+        events = self.get_events()
+
+        for specimen in specimens:
+            specimen_id = specimen["id"]
+            url = f"https://api.plutof.ut.ee/v1/taxonoccurrence/specimen/specimens/{specimen_id}/"
+            self.delete(url)
+
+        for sample in samples:
+            sample_id = sample["id"]
+            url = f"https://api.plutof.ut.ee/v1/taxonoccurrence/materialsample/materialsamples/{sample_id}/"
+            self.delete(url)
+
+        for event in events:
+            event_id = event["id"]
+            url = f"https://api.plutof.ut.ee/v1/sample/samplingevents/{event_id}/"
+            self.delete(url)
