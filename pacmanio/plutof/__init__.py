@@ -125,7 +125,7 @@ class PlutofReader:
         if len(names) > 0 and names[0]["taxon_name"] == name:
             return names[0]["id"]
 
-    def create_specimen(self, specimen_name, materialsample_id, taxon_id):
+    def create_specimen(self, specimen_name, materialsample_id, taxon_id, remarks=None):
 
         sample = self.get_sample(materialsample_id)
         search = re.search("samplingevents/([0-9]+)/", sample["samplingevent"])
@@ -140,7 +140,7 @@ class PlutofReader:
             "specimen_idprim": specimen_name,
             "collected_date": "",
             "exsiccata_no": "",
-            "remarks": "Test remarks",
+            "remarks": remarks,
             "on_clipboard": False,
             "in_gbif": False,
             "download_count": None,

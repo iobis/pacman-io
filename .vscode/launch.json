@@ -22,5 +22,14 @@
             "justMyCode": true,
             "env": {"PYTHONPATH": "${workspaceFolder}"}
         },
+        {
+            "name": "Script: populate_vouchers",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/populate_vouchers.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {"PYTHONPATH": "${workspaceFolder}"}
+        },
     ]
 }
