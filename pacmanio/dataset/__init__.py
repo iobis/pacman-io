@@ -5,6 +5,7 @@ import pyworms
 from dwcawriter import Archive, Table
 import logging
 import pandas as pd
+from pacmanio.util import match_names
 
 
 logger = logging.getLogger("pacmanio")
@@ -38,7 +39,7 @@ class Dataset:
         if self.template is None:
             raise Exception("No template")
 
-        # generate event core
+        # event core
 
         event = self.template.samples.df.copy()
         event.rename(columns={
@@ -79,7 +80,7 @@ class Dataset:
         event = pd.concat([top_event, parent_events, event])
         event = event.loc[:, ["eventID", "parentEventID", "locality", "decimalLongitude", "decimalLatitude", "eventDate", "type"]]
 
-        # generate occurrence extension
+        # occurrence extension
 
         occurrence = self.template.vouchers.df.copy()
         occurrence.rename(columns={
@@ -109,20 +110,9 @@ class Dataset:
 
         if match_worms:
             names = occurrence["scientificName"].values.tolist()
-            logger.debug(f"Matching {len(names)} names")
-            all_matches = [pyworms.aphiaRecordsByMatchNames(name) for name in names]
-            assert (len(all_matches) == len(names))
+            occurrence["scientificNameID"] = match_names(names)
 
-            def select_match(matches):
-                matches = matches[0]
-                good_matches = [match for match in matches if match["match_type"] == "exact" or match["match_type"] == "exact_subgenus"]
-                if len(good_matches) > 0:
-                    return "urn:lsid:marinespecies.org:taxname:" + str(good_matches[0]["AphiaID"])
-
-            matched_ids = list(map(select_match, all_matches))
-            occurrence["scientificNameID"] = matched_ids
-
-        # TODO: generate measurementorfact extension
+        # TODO: measurementorfact extension
 
         # generate archive
 

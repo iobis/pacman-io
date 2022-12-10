@@ -5,6 +5,9 @@ import logging
 from typing import List
 import json
 import re
+from dwcawriter import Archive, Table
+import pandas as pd
+from pacmanio.util import match_names
 
 
 load_dotenv()
@@ -73,6 +76,12 @@ class PlutofReader:
     def get_samples(self):
 
         url = f"https://api.plutof.ut.ee/v1/taxonoccurrence/materialsample/materialsamples/?page_size=20&study={self.project_id}&page="
+        items = self.paginate(url)
+        return items
+
+    def get_areas(self):
+
+        url = f"https://api.plutof.ut.ee/v1/sample/samplingareas/search/?page_size=20&study={self.project_id}&page="
         items = self.paginate(url)
         return items
 
@@ -241,3 +250,62 @@ class PlutofReader:
             event_id = event["id"]
             url = f"https://api.plutof.ut.ee/v1/sample/samplingevents/{event_id}/"
             self.delete(url)
+
+    def generate_dwca(self, match_worms=True) -> Archive:
+
+        # event core
+
+        areas = self.get_areas()
+        areas_df = pd.DataFrame({
+            "eventID": [area["name"] for area in areas],
+            "parentEventID": ["FIJI" if area["name"] != "FIJI" else None for area in areas],
+            "locality": [area["locality_text"] for area in areas],
+            "country": [area["country"] for area in areas],
+            "footprintWKT": [area["geom"] for area in areas]
+        })
+
+        events = self.get_events()
+        events_df = pd.DataFrame({
+            "eventID": [event["event_id"] for event in events],
+            "parentEventID": [event["event_id"][0:5] for event in events],
+            "country": [event["country"] for event in events],
+            "eventDate": [event["timespan_begin"] for event in events]
+        })
+
+        samples = self.get_samples()
+        samples_df = pd.DataFrame({
+            "eventID": [sample["name"] for sample in samples],
+            "parentEventID": [sample["name"][0:14] for sample in samples],
+            "eventDate": [sample["timespan_begin"] for sample in samples]
+        })
+
+        event = pd.concat([areas_df, events_df, samples_df])
+
+        # occurrence extension
+
+        specimens = self.get_specimens()
+        specimen_df = pd.DataFrame({
+            "occurrenceID": [specimen["name"] for specimen in specimens],
+            "materialSampleID": [specimen["name"] for specimen in specimens],
+            "occurrenceRemarks": [specimen["remarks"].replace("\xa0", " ") for specimen in specimens],
+            "scientificName": [specimen["taxon_node"]["name"] if "taxon_node" in specimen and specimen["taxon_node"] is not None else None for specimen in specimens],
+        })
+
+        if match_worms:
+            names = specimen_df["scientificName"].values.tolist()
+            specimen_df["scientificNameID"] = match_names(names)
+
+        # TODO: measurementorfact extension
+
+        # archive
+
+        archive = Archive()
+        archive.eml_text = ""
+
+        core_table = Table(spec="https://rs.gbif.org/core/dwc_event_2022-02-02.xml", data=event, id_index=0, only_mapped_columns=True)
+        archive.core = core_table
+
+        extension_table = Table(spec="https://rs.gbif.org/core/dwc_occurrence_2022-02-02.xml", data=specimen_df, id_index=0)
+        archive.extensions.append(extension_table)
+
+        return archive

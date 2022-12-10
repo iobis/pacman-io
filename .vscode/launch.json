@@ -31,5 +31,14 @@
             "justMyCode": true,
             "env": {"PYTHONPATH": "${workspaceFolder}"}
         },
+        {
+            "name": "Script: export_plutof",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/export_plutof.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {"PYTHONPATH": "${workspaceFolder}"}
+        },
     ]
 }
