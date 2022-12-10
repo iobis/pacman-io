@@ -1,6 +1,5 @@
 from pacmanio.plutof import PlutofReader
 import logging
-import json
 
 
 logging.basicConfig()
@@ -15,4 +14,5 @@ plutof = PlutofReader()
 #specimens = plutof.get_specimens_for_samples(samples)
 #print(json.dumps(specimens, indent=2))
 
-plutof.clear_project()
+taxon_id = plutof.find_taxon_id("Mollusca")
+plutof.create_specimen("PAC_98", 83929, taxon_id)
