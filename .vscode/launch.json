@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Script: dev",
+            "name": "Script: dev_template",
             "type": "python",
             "request": "launch",
-            "program": "scripts/dev.py",
+            "program": "scripts/dev_template.py",
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": {"PYTHONPATH": "${workspaceFolder}"}
