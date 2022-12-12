@@ -226,6 +226,30 @@ class PlutofReader:
         )
         logger.debug(determination_res.status_code)
 
+    def create_measurement(self, name, description, type):
+
+        data = {
+            "name": name,
+            "description": description,
+            "type": type,
+            "name_translated": name,
+            "description_translated": description,
+            "language": "https://api.plutof.ut.ee/v1/geography/languages/123/"
+        }
+
+        url = "https://api.plutof.ut.ee/v1/measurement/measurements/"
+        logger.debug(url)
+        res = requests.post(
+            url,
+            data=json.dumps(data),
+            headers={
+                "Authorization": f"Bearer {self.access_token}",
+                "User-Agent": "PacMAN",
+                "Content-Type": "application/json; charset=UTF-8"
+            }
+        )
+        logger.debug(res.status_code)
+
     def clear_project(self):
 
         answer = input("Are you sure? [y/N] ")

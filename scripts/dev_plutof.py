@@ -14,5 +14,7 @@ plutof = PlutofReader()
 #specimens = plutof.get_specimens_for_samples(samples)
 #print(json.dumps(specimens, indent=2))
 
-taxon_id = plutof.find_taxon_id("Mollusca")
-plutof.create_specimen("PAC_98", 83929, taxon_id)
+#taxon_id = plutof.find_taxon_id("Mollusca")
+#plutof.create_specimen("PAC_98", 83929, taxon_id)
+
+plutof.create_measurement("Temperature of the water body (°C)", "Temperature of the water body (°C)", "float")
