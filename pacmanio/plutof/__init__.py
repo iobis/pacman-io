@@ -107,6 +107,25 @@ class PlutofReader:
         items = self.paginate(url)
         return items
 
+    def get_files(self, material_sample: int, content_type=209):
+
+        url = f"https://api.plutof.ut.ee/v1/filerepository/items/?content_type={content_type}&object_id={material_sample}&page_size=20&page="
+        items = self.paginate(url)
+        for item in items:
+            file = self.fetch(item["file"])
+            file["public_url"] = "https://files.plutof.ut.ee/" + file["public_url"]
+            item["file"] = file
+        return items
+
+    def get_files_for_samples(self, samples: List):
+
+        sample_ids = list(set([sample["id"] for sample in samples]))
+        files = []
+        for sample_id in sample_ids:
+            page = self.get_files(material_sample=sample_id)
+            files.extend(page)
+        return files
+
     def get_specimens_for_samples(self, samples: List):
 
         sample_ids = list(set([sample["id"] for sample in samples]))
