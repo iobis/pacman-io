@@ -38,7 +38,7 @@
             "program": "scripts/populate_images.py",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "env": {"PYTHONPATH": "${workspaceFolder}"}
+            "env": {"PYTHONPATH": "${workspaceFolder}", "PYDEVD_WARN_EVALUATION_TIMEOUT": "30000"}
         },
         {
             "name": "Script: export_plutof",
@@ -47,7 +47,7 @@
             "program": "scripts/export_plutof.py",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "env": {"PYTHONPATH": "${workspaceFolder}"}
+            "env": {"PYTHONPATH": "${workspaceFolder}", "PYDEVD_WARN_EVALUATION_TIMEOUT": "30000"}
         },
     ]
 }

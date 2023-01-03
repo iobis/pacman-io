@@ -68,6 +68,26 @@ class PlutofReader:
                 page = page + 1
         return items
 
+    def set_image_access(self, file_id, view="PUBLIC"):
+        url = "https://api.plutof.ut.ee/v1/access/"
+        logger.debug(url)
+        res = requests.post(
+            url,
+            data=json.dumps({
+                "access_edit": "PRIVATE",
+                "access_view": view,
+                "hyperlinks": [
+                    f"https://api.plutof.ut.ee/v1/filerepository/files/{file_id}/"
+                ]
+            }),
+            headers={
+                "Authorization": f"Bearer {self.access_token}",
+                "User-Agent": "PacMAN",
+                "Content-Type": "application/json; charset=UTF-8"
+            }
+        )
+        logger.debug(res.status_code)
+
     def upload_file(self, path, filename, sample_id):
 
         # filerepository
@@ -97,13 +117,14 @@ class PlutofReader:
 
         # files
 
+        upload_id = res_content.json()["upload_id"]
         res_files = requests.post(
             "https://api.plutof.ut.ee/v1/filerepository/files/",
             data=json.dumps({
                 "identifier": filename,
                 "original_name": filename,
                 "format": "image/jpeg",
-                "file_upload": "https://api.plutof.ut.ee/v1/filerepository/fileuploads/" + str(res_content.json()["upload_id"]) + "/",
+                "file_upload": f"https://api.plutof.ut.ee/v1/filerepository/fileuploads/{upload_id}/",
                 "license": "https://api.plutof.ut.ee/v1/filerepository/licenses/2/",
                 "type": 18
             }),
@@ -193,7 +214,9 @@ class PlutofReader:
         items = self.paginate(url)
         for item in items:
             file = self.fetch(item["file"])
-            file["public_url"] = "https://files.plutof.ut.ee/" + file["public_url"]
+            public_url = file["public_url"]
+            if public_url is not None:
+                file["public_url"] = f"https://files.plutof.ut.ee/{public_url}"
             item["file"] = file
         return items
 
@@ -405,6 +428,18 @@ class PlutofReader:
 
         event = pd.concat([areas_df, events_df, samples_df])
 
+        # multimedia extension
+
+        files = self.get_files_for_samples(samples)
+        multimedia_df = pd.DataFrame({
+            "eventID": [file["content_object"]["name"] for file in files],
+            "type": "StillImage",
+            "format": [file["file"]["format"] for file in files],
+            "identifier": [file["file"]["public_url"] for file in files],
+            "references": [file["file"]["url"] for file in files],
+            "license": [file["file"]["license"] for file in files],
+        })
+
         # occurrence extension
 
         specimens = self.get_specimens_for_samples(samples)
@@ -447,5 +482,8 @@ class PlutofReader:
 
         extension_table_env = Table(spec="https://rs.gbif.org/extension/obis/extended_measurement_or_fact.xml", data=measurement_df, id_index=0)
         archive.extensions.append(extension_table_env)
+
+        extension_table_mm = Table(spec="https://rs.gbif.org/extension/gbif/1.0/multimedia.xml", data=multimedia_df, id_index=0)
+        archive.extensions.append(extension_table_mm)
 
         return archive
