@@ -32,6 +32,15 @@
             "env": {"PYTHONPATH": "${workspaceFolder}"}
         },
         {
+            "name": "Script: populate_images",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/populate_images.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {"PYTHONPATH": "${workspaceFolder}"}
+        },
+        {
             "name": "Script: export_plutof",
             "type": "python",
             "request": "launch",

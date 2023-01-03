@@ -12,10 +12,10 @@ logging.getLogger("pacmanio").setLevel(logging.DEBUG)
 
 
 plutof = PlutofReader()
-archive = plutof.generate_dwca()
+archive = plutof.generate_dwca(match_worms=False)
 
 abstract = "This dataset contains the first voucher specimens collected by the PacMAN project, which aims to set up an invasive alien species monitoring network and early alert system in the Pacific Small Island Developing States (PSIDS). The voucher specimens collected here were found on settlement plates deployed in and around Suva harbour, Fiji, in 2022. Future versions of this dataset will include results from metabarcoding of water samples and settlement plates, as well as settlement plate and voucher images."
-title = "Data collected by the PacMAN project"
+title = "Data collected in Suva, Fiji by the PacMAN project"
 
 doc = Eml(
     #package_id="http://ipt.vliz.be/kmfri/resource?id=vegetation_gazi_bay_kenya_1987/v1.0",
@@ -57,7 +57,7 @@ doc = Eml(
                 electronic_mail_address=["w.appeltans@unesco.org"]
             ),
         ],
-        keyword_set=KeywordSet(keyword=["PacMAN", "invasive species"]),
+        #keyword_set=KeywordSet(keyword=["PacMAN", "invasive species"]),
         intellectual_rights=IntellectualRights(
             para=Para(
                 [
@@ -77,4 +77,4 @@ serializer = XmlSerializer(config=config)
 eml = serializer.render(doc)
 
 archive.eml_text = eml
-archive.export(os.path.expanduser("~/Desktop/temp/pacman.zip"))
+archive.export(os.path.expanduser("~/Desktop/temp/pacman_suva.zip"))

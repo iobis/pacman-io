@@ -8,6 +8,7 @@ import re
 from dwcawriter import Archive, Table
 import pandas as pd
 from pacmanio.util import match_names
+from urllib3 import encode_multipart_formdata
 
 
 load_dotenv()
@@ -67,6 +68,69 @@ class PlutofReader:
                 page = page + 1
         return items
 
+    def upload_file(self, path, filename, sample_id):
+
+        # filerepository
+
+        size = str(os.path.getsize(path))
+        fields = {
+            "file": (filename, open(path, "rb").read(), "image/jpeg"),
+            "resumableChunkNumber": "1",
+            "resumableTotalChunks": "1",
+            "resumableChunkSize": size,
+            "resumableCurrentChunkSize": size,
+            "resumableTotalSize": size,
+            "resumableFilename": filename,
+            "resumableRelativePath": filename,
+            "resumableIdentifier": "1234",
+            "resumableType": "image/jpeg"
+        }
+        body, header = encode_multipart_formdata(fields)
+        res_content = requests.post("https://api.plutof.ut.ee/v1/filerepository/fileuploads/content/", body, headers={
+            "Authorization": f"Bearer {self.access_token}",
+            "User-Agent": "PacMAN",
+            "Content-Type": header,
+            "Accept-Encoding": "gzip, deflate, br",
+            "Accept": "*/*",
+            "Content-Length": size
+        })
+
+        # files
+
+        res_files = requests.post(
+            "https://api.plutof.ut.ee/v1/filerepository/files/",
+            data=json.dumps({
+                "identifier": filename,
+                "original_name": filename,
+                "format": "image/jpeg",
+                "file_upload": "https://api.plutof.ut.ee/v1/filerepository/fileuploads/" + str(res_content.json()["upload_id"]) + "/",
+                "license": "https://api.plutof.ut.ee/v1/filerepository/licenses/2/",
+                "type": 18
+            }),
+            headers={
+                "Authorization": f"Bearer {self.access_token}",
+                "User-Agent": "PacMAN",
+                "Content-Type": "application/json; charset=UTF-8"
+            }
+        )
+
+        # items
+
+        requests.post(
+            "https://api.plutof.ut.ee/v1/filerepository/items/",
+            data=json.dumps({
+                "object_id": sample_id,
+                "is_public": True,
+                "content_type": "https://api.plutof.ut.ee/v1/contenttypes/209/",
+                "file": res_files.json()["url"]
+            }),
+            headers={
+                "Authorization": f"Bearer {self.access_token}",
+                "User-Agent": "PacMAN",
+                "Content-Type": "application/json; charset=UTF-8"
+            }
+        )
+
     def get_project(self):
 
         url = f"https://api.plutof.ut.ee/v1/public/projects/{self.project_id}/"
@@ -107,6 +171,22 @@ class PlutofReader:
         items = self.paginate(url)
         return items
 
+    def get_measurements(self, material_sample: int = None):
+
+        url = f"https://api.plutof.ut.ee/v1/measurement/objectmeasurements/?content_type=209&object_id={material_sample}&page="
+        items = self.paginate(url)
+        return items
+
+    def get_measurements_for_samples(self, samples: List):
+
+        results = []
+        for sample in samples:
+            page = self.get_measurements(material_sample=sample["id"])
+            for measurement in page:
+                measurement["sample"] = sample
+            results.extend(page)
+        return results
+
     def get_files(self, material_sample: int, content_type=209):
 
         url = f"https://api.plutof.ut.ee/v1/filerepository/items/?content_type={content_type}&object_id={material_sample}&page_size=20&page="
@@ -120,18 +200,19 @@ class PlutofReader:
     def get_files_for_samples(self, samples: List):
 
         sample_ids = list(set([sample["id"] for sample in samples]))
-        files = []
+        results = []
         for sample_id in sample_ids:
             page = self.get_files(material_sample=sample_id)
-            files.extend(page)
-        return files
+            results.extend(page)
+        return results
 
     def get_specimens_for_samples(self, samples: List):
 
-        sample_ids = list(set([sample["id"] for sample in samples]))
         specimens = []
-        for sample_id in sample_ids:
-            page = self.get_specimens(material_sample=sample_id)
+        for sample in samples:
+            page = self.get_specimens(material_sample=sample["id"])
+            for specimen in specimens:
+                specimen["sample"] = sample
             specimens.extend(page)
         return specimens
 
@@ -326,9 +407,12 @@ class PlutofReader:
 
         # occurrence extension
 
-        specimens = self.get_specimens()
+        specimens = self.get_specimens_for_samples(samples)
         specimen_df = pd.DataFrame({
-            "occurrenceID": [specimen["name"] for specimen in specimens],
+            "eventID": [specimen["sample"]["name"] for specimen in specimens],
+            "occurrenceID": ["pacman:specimen:" + specimen["specimen_id"] for specimen in specimens],
+            "occurrenceStatus": "present",
+            "basisOfRecord": "PreservedSpecimen",
             "materialSampleID": [specimen["name"] for specimen in specimens],
             "occurrenceRemarks": [specimen["remarks"].replace("\xa0", " ") for specimen in specimens],
             "scientificName": [specimen["taxon_node"]["name"] if "taxon_node" in specimen and specimen["taxon_node"] is not None else None for specimen in specimens],
@@ -338,7 +422,17 @@ class PlutofReader:
             names = specimen_df["scientificName"].values.tolist()
             specimen_df["scientificNameID"] = match_names(names)
 
-        # TODO: measurementorfact extension
+        # measurementorfact extension
+
+        logger.warning("Environmental samples assumed to contain _ENV in name")
+        env_samples = [sample for sample in samples if "_ENV" in sample["name"]]
+        measurements = self.get_measurements_for_samples(env_samples)
+        measurement_df = pd.DataFrame({
+            "eventID": [measurement["sample"]["name"] for measurement in measurements],
+            "measurementType": [measurement["name"] for measurement in measurements],
+            "measurementValue": [measurement["value"] for measurement in measurements],
+            "measurementTypeID": [measurement["measurement"] for measurement in measurements],
+        })
 
         # archive
 
@@ -350,5 +444,8 @@ class PlutofReader:
 
         extension_table = Table(spec="https://rs.gbif.org/core/dwc_occurrence_2022-02-02.xml", data=specimen_df, id_index=0)
         archive.extensions.append(extension_table)
+
+        extension_table_env = Table(spec="https://rs.gbif.org/extension/obis/extended_measurement_or_fact.xml", data=measurement_df, id_index=0)
+        archive.extensions.append(extension_table_env)
 
         return archive
