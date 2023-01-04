@@ -448,7 +448,7 @@ class PlutofReader:
             "occurrenceID": ["pacman:specimen:" + specimen["specimen_id"] for specimen in specimens],
             "occurrenceStatus": "present",
             "basisOfRecord": "PreservedSpecimen",
-            "materialSampleID": [specimen["name"] for specimen in specimens],
+            "materialSampleID": [specimen["specimen_id"] for specimen in specimens],
             "occurrenceRemarks": [specimen["remarks"].replace("\xa0", " ") for specimen in specimens],
             "scientificName": [specimen["taxon_node"]["name"] if "taxon_node" in specimen and specimen["taxon_node"] is not None else None for specimen in specimens],
         })
@@ -464,7 +464,7 @@ class PlutofReader:
         measurements = self.get_measurements_for_samples(env_samples)
         measurement_df = pd.DataFrame({
             "eventID": [measurement["sample"]["name"] for measurement in measurements],
-            "measurementType": [measurement["name"] for measurement in measurements],
+            "measurementType": [measurement["measurement_name"] for measurement in measurements],
             "measurementValue": [measurement["value"] for measurement in measurements],
             "measurementTypeID": [measurement["measurement"] for measurement in measurements],
         })
