@@ -18,8 +18,10 @@ logger = logging.getLogger("pacmanio")
 class PlutofReader:
 
     def __init__(self):
-
         self.project_id = 98281
+        self.access_token = self.get_token()
+
+    def get_token(self):
         url = "https://api.plutof.ut.ee/v1/public/auth/token/"
         logger.debug(url)
         res = requests.post(url, data={
@@ -31,7 +33,7 @@ class PlutofReader:
         })
         logger.debug(res.status_code)
         data = res.json()
-        self.access_token = data["access_token"]
+        return data["access_token"]
 
     def fetch(self, url):
 
@@ -410,6 +412,7 @@ class PlutofReader:
             "country": [area["country"] for area in areas],
             "footprintWKT": [area["geom"] for area in areas]
         })
+        areas_df[["decimalLongitude", "decimalLatitude"]] = areas_df["footprintWKT"].apply(lambda x: pd.Series(re.findall("\d+\.\d+", x) if x is not None else [None, None]))
 
         events = self.get_events()
         events_df = pd.DataFrame({
@@ -450,7 +453,7 @@ class PlutofReader:
             "basisOfRecord": "PreservedSpecimen",
             "materialSampleID": [specimen["specimen_id"] for specimen in specimens],
             "occurrenceRemarks": [specimen["remarks"].replace("\xa0", " ") for specimen in specimens],
-            "scientificName": [specimen["taxon_node"]["name"] if "taxon_node" in specimen and specimen["taxon_node"] is not None else None for specimen in specimens],
+            "scientificName": [specimen["taxon_name"] if "taxon_name" in specimen else None for specimen in specimens],
         })
 
         if match_worms:

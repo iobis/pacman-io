@@ -12,7 +12,7 @@ logging.getLogger("pacmanio").setLevel(logging.DEBUG)
 
 
 plutof = PlutofReader()
-archive = plutof.generate_dwca(match_worms=False)
+archive = plutof.generate_dwca(match_worms=True)
 
 abstract = "This dataset contains the first voucher specimens collected by the PacMAN project, which aims to set up an invasive alien species monitoring network and early alert system in the Pacific Small Island Developing States (PSIDS). The voucher specimens collected here were found on settlement plates deployed in and around Suva harbour, Fiji, in 2022. Future versions of this dataset will include results from metabarcoding of water samples and settlement plates, as well as settlement plate and voucher images."
 title = "Data collected in Suva, Fiji by the PacMAN project"
