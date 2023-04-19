@@ -1,18 +1,23 @@
 from pacmanio.plutof import PlutofReader
+from pacmanio.plutof.dwca import generate_dwca
 from pacmanio.dataset import Dataset
 import logging
 import os
 from xsdata.formats.dataclass.serializers import XmlSerializer
 from xsdata.formats.dataclass.serializers.config import SerializerConfig
 from eml.gbif_1_1 import AgentType, Eml, Dataset, IndividualName, IntellectualRights, KeywordSet, Para, Ulink, Abstract
+import requests_cache
+
+
+#requests_cache.install_cache("test_cache")
 
 
 logging.basicConfig()
 logging.getLogger("pacmanio").setLevel(logging.DEBUG)
 
 
-plutof = PlutofReader()
-archive = plutof.generate_dwca(match_worms=True)
+plutof_reader = PlutofReader()
+archive = generate_dwca(plutof_reader, match_worms=True, remove_missing_names=True)
 
 abstract = "This dataset contains the first voucher specimens collected by the PacMAN project, which aims to set up an invasive alien species monitoring network and early alert system in the Pacific Small Island Developing States (PSIDS). The voucher specimens collected here were found on settlement plates deployed in and around Suva harbour, Fiji, in 2022. Future versions of this dataset will include results from metabarcoding of water samples and settlement plates, as well as settlement plate and voucher images."
 title = "Data collected in Suva, Fiji by the PacMAN project"
