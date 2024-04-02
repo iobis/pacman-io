@@ -9,14 +9,26 @@ import logging
 logger = logging.getLogger("pacmanio")
 
 
+def add_prefix(identifier):
+    if not identifier.startswith("PACMAN_"):
+        return f"PACMAN_{identifier}"
+    else:
+        return identifier
+
+
+def create_occurrenceid(specimen):
+    specimen_id = specimen["specimen_id"].replace(" ", "_").upper()
+    return f"pacman:specimen:{specimen_id}"
+
+
 def generate_dwca(plutof_reader: PlutofReader, match_worms=True, remove_missing_names=False) -> Archive:
 
     # event core
 
     areas = plutof_reader.get_areas()
     areas_df = pd.DataFrame({
-        "eventID": [area["name"] for area in areas],
-        "parentEventID": ["FIJI" if area["name"] != "FIJI" else None for area in areas],
+        "eventID": [add_prefix(area["name"]) for area in areas],
+        "parentEventID": [add_prefix("FIJI") if area["name"] != "FIJI" else None for area in areas],
         "locality": [area["locality_text"] for area in areas],
         "country": [area["country"] for area in areas],
         "footprintWKT": [area["geom"] for area in areas]
@@ -26,16 +38,16 @@ def generate_dwca(plutof_reader: PlutofReader, match_worms=True, remove_missing_
 
     events = plutof_reader.get_events()
     events_df = pd.DataFrame({
-        "eventID": [event["event_id"] for event in events],
-        "parentEventID": [event["event_id"][0:5] for event in events],
+        "eventID": [add_prefix(event["event_id"]) for event in events],
+        "parentEventID": [add_prefix("_".join(event["event_id"].split("_")[:-1])) for event in events],
         "country": [event["country"] for event in events],
         "eventDate": [event["timespan_begin"] for event in events]
     })
 
     samples = plutof_reader.get_samples()
     samples_df = pd.DataFrame({
-        "eventID": [sample["name"] for sample in samples],
-        "parentEventID": [sample["name"][0:14] for sample in samples],
+        "eventID": [add_prefix(sample["name"]) for sample in samples],
+        "parentEventID": [add_prefix("_".join(sample["name"].split("_")[:-1])) for sample in samples],
         "eventDate": [sample["timespan_begin"] for sample in samples],
         "minimumDepthInMeters": 0.0,
         "maximumDepthInMeters": 30.0
@@ -51,12 +63,12 @@ def generate_dwca(plutof_reader: PlutofReader, match_worms=True, remove_missing_
 
     files = plutof_reader.get_files_for_samples(samples)
     multimedia_df = pd.DataFrame({
-        "eventID": [file["content_object"]["name"] for file in files],
+        "eventID": [add_prefix(file["content_object"]["name"]) for file in files],
         "type": "StillImage",
         "format": [file["file"]["format"] for file in files],
         "identifier": [file["file"]["public_url"] for file in files],
         "references": [file["file"]["url"] for file in files],
-        "license": [file["file"]["license"] for file in files],
+        "license": [file["file"]["license"] if "license" in file["file"] else None for file in files],
     })
 
     # occurrence extension
@@ -64,11 +76,12 @@ def generate_dwca(plutof_reader: PlutofReader, match_worms=True, remove_missing_
     specimens = plutof_reader.get_specimens_for_samples(samples)
     plutof_reader.resolve(specimens, ["related_materialsample"])
     specimen_df = pd.DataFrame({
-        "eventID": [specimen["related_materialsample"]["name"] if "related_materialsample" in specimen else None for specimen in specimens],
-        "occurrenceID": ["pacman:specimen:" + specimen["specimen_id"] for specimen in specimens],
+        "eventID": [add_prefix(specimen["related_materialsample"]["name"]) if "related_materialsample" in specimen else None for specimen in specimens],
+        "materialSampleID": [add_prefix(specimen["related_materialsample"]["name"]) if "related_materialsample" in specimen else None for specimen in specimens],
+        "occurrenceID": [create_occurrenceid(specimen) for specimen in specimens],
         "occurrenceStatus": "present",
         "basisOfRecord": "PreservedSpecimen",
-        "materialSampleID": [specimen["specimen_id"] for specimen in specimens],
+        "catalogNumber": [specimen["specimen_id"] for specimen in specimens],
         "occurrenceRemarks": [specimen["remarks"].replace("\xa0", " ") for specimen in specimens],
         "scientificName": [specimen["taxon_name"] if "taxon_name" in specimen else None for specimen in specimens],
     })
@@ -90,7 +103,7 @@ def generate_dwca(plutof_reader: PlutofReader, match_worms=True, remove_missing_
     env_samples = [sample for sample in samples if "_ENV" in sample["name"]]
     measurements = plutof_reader.get_measurements_for_samples(env_samples)
     measurement_df = pd.DataFrame({
-        "eventID": [measurement["sample"]["name"] for measurement in measurements],
+        "eventID": [add_prefix(measurement["sample"]["name"]) for measurement in measurements],
         "measurementType": [measurement["measurement_name"] for measurement in measurements],
         "measurementValue": [measurement["value"] for measurement in measurements],
         "measurementTypeID": [measurement["measurement"] for measurement in measurements],

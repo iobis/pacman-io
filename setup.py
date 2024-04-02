@@ -9,4 +9,7 @@ setup(name="pacmanio",
       author_email="p.provoost@unesco.org",
       description="PacMAN data transformations",
       packages=find_packages(),
-      zip_safe=False)
+      zip_safe=False,
+      test_suite="nose.collector",
+      tests_require=["nose"],
+)

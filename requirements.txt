@@ -1,6 +1,6 @@
-pandas==1.1.4
+pandas==2.1.1
 setuptools==62.5.0
 openpyxl==3.0.10
-dwca-writer==0.1.2
+dwca-writer==0.2.0
 python-eml==0.0.2
 git+https://github.com/iobis/pyworms.git@0.2.0

@@ -2,7 +2,6 @@ from dotenv.main import load_dotenv
 import os
 import requests
 import logging
-from typing import List
 import json
 import re
 from urllib3 import encode_multipart_formdata
@@ -12,13 +11,16 @@ load_dotenv()
 logger = logging.getLogger("pacmanio")
 
 
+PACMAN_PROJECT_ID = 98281
+
+
 class PlutofReader:
 
-    def __init__(self):
-        self.project_id = 98281
+    def __init__(self, project_id: int = PACMAN_PROJECT_ID):
+        self.project_id = project_id
         self.access_token = self.get_token()
 
-    def resolve(self, items: List, fields: List):
+    def resolve(self, items: list, fields: list):
         for field in fields:
             keys = set([item[field] for item in items])
             results_map = dict([(key, self.fetch(key)) for key in keys])
@@ -182,6 +184,22 @@ class PlutofReader:
         sample = self.fetch(url)
         return sample
 
+    def update_sample(self, sample):
+
+        sample_id = sample["id"]
+        url = f"https://api.plutof.ut.ee/v1/taxonoccurrence/materialsample/materialsamples/{sample_id}/"
+        res = requests.put(
+            url,
+            data=json.dumps(sample),
+            headers={
+                "Authorization": f"Bearer {self.access_token}",
+                "User-Agent": "PacMAN",
+                "Content-Type": "application/json; charset=UTF-8"
+            }
+        )
+        logger.debug(res.status_code)
+        return res.json()
+
     def get_events(self):
 
         samples = self.get_samples()
@@ -204,7 +222,7 @@ class PlutofReader:
         items = self.paginate(url)
         return items
 
-    def get_measurements_for_samples(self, samples: List):
+    def get_measurements_for_samples(self, samples: list):
 
         results = []
         for sample in samples:
@@ -226,7 +244,7 @@ class PlutofReader:
             item["file"] = file
         return items
 
-    def get_files_for_samples(self, samples: List):
+    def get_files_for_samples(self, samples: list):
 
         sample_ids = list(set([sample["id"] for sample in samples]))
         results = []
@@ -235,7 +253,7 @@ class PlutofReader:
             results.extend(page)
         return results
 
-    def get_specimens_for_samples(self, samples: List):
+    def get_specimens_for_samples(self, samples: list):
 
         specimens = []
         for sample in samples:
