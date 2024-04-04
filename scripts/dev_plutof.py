@@ -8,6 +8,20 @@ logging.getLogger("pacmanio").setLevel(logging.DEBUG)
 
 plutof_reader = PlutofReader()
 
+samples = plutof_reader.get_samples()
+dnas = plutof_reader.get_dnas_for_samples(samples)
+
+print(dnas)
+
+
+
+
+
+
+
+
+
+
 # token = plutof.get_token()
 # print(token)
 
@@ -30,6 +44,14 @@ plutof_reader = PlutofReader()
 #events = plutof.get_events()
 #print(events)
 
-specimens = plutof_reader.get_specimens(material_sample=83929)
-plutof_reader.resolve(specimens, ["samplingevent", "related_materialsample"])
-print(specimens)
+# specimens = plutof_reader.get_specimens(material_sample=83929)
+# plutof_reader.resolve(specimens, ["samplingevent", "related_materialsample"])
+# print(specimens)
+
+# samples = plutof_reader.get_samples()
+# for s in samples:
+#     sample = plutof_reader.get_sample(s["id"])
+#     if not sample["name"].startswith("PACMAN_"):
+#         print(f"Correcting sample name: {sample['name']}")
+#         sample["name"] = f"PACMAN_{sample['name']}"
+#         plutof_reader.update_sample(sample)

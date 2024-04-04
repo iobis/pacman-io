@@ -10,3 +10,4 @@ __pycache__
 cover
 .DS_Store
 .env
+test_cache.sqlite

@@ -69,7 +69,10 @@ class PlutofReader:
             else:
                 results = res.json()
                 if type(results) is not list:
-                    results = results["results"]
+                    if "results" in results:
+                        results = results["results"]
+                    else:
+                        results = results["data"]
                 if len(results) == 0:
                     break
                 items = items + results
@@ -238,9 +241,9 @@ class PlutofReader:
         items = self.paginate(url)
         for item in items:
             file = self.fetch(item["file"])
-            public_url = file["public_url"]
-            if public_url is not None:
-                file["public_url"] = f"https://files.plutof.ut.ee/{public_url}"
+            download_link = file["download_links"]["link"]
+            if download_link is not None:
+                file["download_link"] = download_link
             item["file"] = file
         return items
 
@@ -260,6 +263,20 @@ class PlutofReader:
             page = self.get_specimens(material_sample=sample["id"])
             specimens.extend(page)
         return specimens
+
+    def get_dnas(self, material_sample: int = None):
+
+        url = f"https://api.plutof.ut.ee/v1/dna-lab/dnas/?include=dna_extraction&material_sample={material_sample}&page[number]="
+        items = self.paginate(url)
+        return items
+
+    def get_dnas_for_samples(self, samples: list):
+
+        dnas = []
+        for sample in samples:
+            page = self.get_dnas(material_sample=sample["id"])
+            dnas.extend(page)
+        return dnas
 
     def delete(self, url):
 

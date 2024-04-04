@@ -5,13 +5,23 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: test",
+            "type": "python",
+            "request": "launch",
+            "program": "test.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
             "name": "Script: dev_template",
             "type": "python",
             "request": "launch",
             "program": "scripts/dev_template.py",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "env": {"PYTHONPATH": "${workspaceFolder}"}
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
         },
         {
             "name": "Script: dev_plutof",
@@ -20,7 +30,9 @@
             "program": "scripts/dev_plutof.py",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "env": {"PYTHONPATH": "${workspaceFolder}"}
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
         },
         {
             "name": "Script: populate_vouchers",
@@ -29,7 +41,9 @@
             "program": "scripts/populate_vouchers.py",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "env": {"PYTHONPATH": "${workspaceFolder}"}
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
         },
         {
             "name": "Script: populate_images",
@@ -38,7 +52,10 @@
             "program": "scripts/populate_images.py",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "env": {"PYTHONPATH": "${workspaceFolder}", "PYDEVD_WARN_EVALUATION_TIMEOUT": "30000"}
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "PYDEVD_WARN_EVALUATION_TIMEOUT": "30000"
+            }
         },
         {
             "name": "Script: export_plutof",
@@ -47,7 +64,10 @@
             "program": "scripts/export_plutof.py",
             "console": "integratedTerminal",
             "justMyCode": true,
-            "env": {"PYTHONPATH": "${workspaceFolder}", "PYDEVD_WARN_EVALUATION_TIMEOUT": "30000"}
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "PYDEVD_WARN_EVALUATION_TIMEOUT": "30000"
+            }
         },
     ]
 }

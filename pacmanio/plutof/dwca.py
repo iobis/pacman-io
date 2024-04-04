@@ -63,10 +63,10 @@ def generate_dwca(plutof_reader: PlutofReader, match_worms=True, remove_missing_
 
     files = plutof_reader.get_files_for_samples(samples)
     multimedia_df = pd.DataFrame({
-        "eventID": [add_prefix(file["content_object"]["name"]) for file in files],
+        "eventID": [add_prefix(file["object_name"]) for file in files],
         "type": "StillImage",
         "format": [file["file"]["format"] for file in files],
-        "identifier": [file["file"]["public_url"] for file in files],
+        "identifier": [file["file"]["download_link"] for file in files],
         "references": [file["file"]["url"] for file in files],
         "license": [file["file"]["license"] if "license" in file["file"] else None for file in files],
     })
