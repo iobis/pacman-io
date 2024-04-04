@@ -93,6 +93,12 @@ def generate_dwca(plutof_reader: PlutofReader, match_worms=True, remove_missing_
     if remove_missing_names:
         specimen_df = specimen_df[specimen_df["scientificNameID"].notnull()]
 
+    # add media links to events and occurrences
+        
+    image_urls = multimedia_df.groupby("eventID", as_index=False)["identifier"].agg(" | ".join).rename(columns={"identifier": "associatedMedia"})
+    specimen_df = specimen_df.merge(image_urls, on="eventID", how="left")
+    event_df = event_df.merge(image_urls, on="eventID", how="left")
+
     # fix for missing eventID
 
     specimen_df = specimen_df[specimen_df["eventID"].notnull()]
